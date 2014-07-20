@@ -7,7 +7,10 @@ from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from SocketServer import ThreadingMixIn
 
 from jinja2 import Environment, PackageLoader
-from redis import StrictRedis
+try:
+    from redis import StrictRedis
+except:
+    from mockredis.client import MockRedis as StrictRedis
 
 from actions import get_acl, get_item, list_buckets, ls_bucket
 from file_store import FileStore
@@ -155,7 +158,11 @@ if __name__ == '__main__':
                         help='Pull non-existent keys from aws.')
     args = parser.parse_args()
 
-    redis_client = StrictRedis()
+    try:
+        redis_client = StrictRedis(strict=True)
+    except:
+        redis_client = StrictRedis()
+
 
     server = ThreadedHTTPServer((args.hostname, args.port), S3Handler)
     server.set_file_store(FileStore(args.root, redis_client))
