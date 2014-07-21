@@ -142,6 +142,23 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
         self.env = env
 
 
+
+def serve_fs(fs, args):
+    try:
+        redis_client = StrictRedis(strict=True)
+    except:
+        redis_client = StrictRedis()
+
+
+    server = ThreadedHTTPServer((args.hostname, args.port), S3Handler)
+    server.set_file_store(FileStore(fs, redis_client))
+    server.set_mock_hostname(args.hostname)
+    server.set_pull_from_aws(args.pull_from_aws)
+    server.set_template_env(Environment(loader=PackageLoader('fs.expose.mocks3', 'templates')))
+
+    print 'Starting server, use <Ctrl-C> to stop'
+    server.serve_forever()
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='A Mock-S3 server.')
     parser.add_argument('--hostname', dest='hostname', action='store',
@@ -158,17 +175,5 @@ if __name__ == '__main__':
                         help='Pull non-existent keys from aws.')
     args = parser.parse_args()
 
-    try:
-        redis_client = StrictRedis(strict=True)
-    except:
-        redis_client = StrictRedis()
-
-
-    server = ThreadedHTTPServer((args.hostname, args.port), S3Handler)
-    server.set_file_store(FileStore(args.root, redis_client))
-    server.set_mock_hostname(args.hostname)
-    server.set_pull_from_aws(args.pull_from_aws)
-    server.set_template_env(Environment(loader=PackageLoader('mock_s3', 'templates')))
-
-    print 'Starting server, use <Ctrl-C> to stop'
-    server.serve_forever()
+    from fs.osfs import OSFS
+    serve_fs(OSFS(args.root),args)
