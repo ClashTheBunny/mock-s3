@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-import argparse
 import logging
-import os
 import urlparse
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from SocketServer import ThreadingMixIn
@@ -17,7 +15,6 @@ from file_store import FileStore
 
 
 logging.basicConfig(level=logging.INFO)
-
 
 class S3Handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -158,22 +155,3 @@ def serve_fs(fs, args):
 
     print 'Starting server, use <Ctrl-C> to stop'
     server.serve_forever()
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='A Mock-S3 server.')
-    parser.add_argument('--hostname', dest='hostname', action='store',
-                        default='localhost',
-                        help='Hostname to listen on.')
-    parser.add_argument('--port', dest='port', action='store',
-                        default=10001, type=int,
-                        help='Port to run server on.')
-    parser.add_argument('--root', dest='root', action='store',
-                        default='%s/s3store' % os.environ['HOME'],
-                        help='Defaults to $HOME/s3store.')
-    parser.add_argument('--pull-from-aws', dest='pull_from_aws', action='store_true',
-                        default=False,
-                        help='Pull non-existent keys from aws.')
-    args = parser.parse_args()
-
-    from fs.osfs import OSFS
-    serve_fs(OSFS(args.root),args)
